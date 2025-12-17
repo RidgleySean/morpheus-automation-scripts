@@ -32,7 +32,7 @@ def getInputData():
     linuxPassword = sys.argv[1]
     print("Creating an HVM cluster for instance ID: " + str(instanceId))
     print(f"cloudId: {cloudId}, clusterName: {clusterName}")
-    clusterLayoutId = morpheus['customOptions'].get('clusterLayoutId', 227)
+    clusterLayoutId = morpheus['customOptions'].get('clusterLayoutId', None)
     sshUserId = morpheus["customOptions"].get("sshUserId", 1)
     sshHostName = morpheus['customOptions'].get('sshHostName', None)
     return {
@@ -84,7 +84,7 @@ def getUserSshKeyId(headers, inputData):
 	sshKeyId = responseData['user']['linuxKeyPairId'] # TODO this assumes the host VM is Linux.
 	return sshKeyId
 
-def postCluster(headers, inputData, instanceData, sshKeyId):
+def postCluster(headers, inputData, instanceData, sshKeyId, clusterLayoutId):
     print("Creating HVM cluster...")
     applianceUrl = inputData['applianceUrl']
     clusterUrl = f"{applianceUrl}/api/clusters"
@@ -99,7 +99,7 @@ def postCluster(headers, inputData, instanceData, sshKeyId):
 				'id': int(inputData['cloudId'])
 			},
 			'layout': {
-				'id': int(inputData['clusterLayoutId'])
+				'id': int(clusterLayoutId)
 			},
 			'server': {
 				"config": {
@@ -162,6 +162,29 @@ def ensureSshAvailable(instanceIp):
             time.sleep(30)
     return False
 
+def getClusterLayoutId(headers, inputData):
+    applianceUrl = inputData['applianceUrl']
+    clusterTypesUri = f"{applianceUrl}/api/library/cluster-types"
+    clusterTypesResponse = requests.get(clusterTypesUri, headers, verify=False)
+    print(f"response code: {clusterTypesResponse.status_code}")
+    clusterTypes = clusterTypesResponse.json()
+    for clusterType in clusterTypes['clusterTypes']:
+        if clusterType['code'] == "mvm-cluster":
+            groupTypeId = clusterType['id']
+            break
+    if groupTypeId is None:
+        print("Could not determine hvm-cluster ID")
+        sys.exit(1)
+    clusterLayoutsUri = f"{applianceUrl}/api/library/cluster-layouts?zoneId={int(inputData['cloudId'])}&groupTypeId={int(groupTypeId)}"
+    clusterLayoutsResponse = requests.get(clusterLayoutsUri, headers, verify=False)
+    print(f"response code: {clusterLayoutsResponse.status_code}")
+    clusterLayouts = clusterLayoutsResponse.json()
+    for layout in clusterLayouts['layouts']:
+        if layout['code'] == "mvm-1.2-ubuntu-24.04-std-morpheus-amd64":
+            return layout['id']
+    print("Error: Could not determine cluster layout ID.")
+    sys.exit(1)
+
 inputData = getInputData()
 headers = {
 	'Accept': 'application/json',
@@ -170,7 +193,11 @@ headers = {
 }
 instanceData = getInstanceData(headers, inputData)
 sshKeyId = getUserSshKeyId(headers, inputData)
+if (inputData['clusterLayoutId'] is None):
+    clusterLayoutId = getClusterLayoutId(headers, inputData)
+else:
+    clusterLayoutId = inputData['clusterLayoutId']
 if ensureSshAvailable(instanceData['instanceIp']):
-	postCluster(headers, inputData, instanceData, sshKeyId)
+	postCluster(headers, inputData, instanceData, sshKeyId, clusterLayoutId)
 else:
 	print(f"SSH not available on {instanceData['instanceIp']} after multiple attempts. Exiting.")
