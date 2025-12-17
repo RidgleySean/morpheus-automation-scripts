@@ -99,7 +99,7 @@ def postCluster(headers, inputData, instanceData, sshKeyId):
 				'id': int(inputData['cloudId'])
 			},
 			'layout': {
-				'id': inputData['clusterLayoutId'] 
+				'id': int(inputData['clusterLayoutId'])
 			},
 			'server': {
 				"config": {
