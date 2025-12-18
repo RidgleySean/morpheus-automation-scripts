@@ -164,6 +164,7 @@ def ensureSshAvailable(instanceIp):
 
 def getClusterLayoutId(headers, inputData):
     applianceUrl = inputData['applianceUrl']
+    print("Getting cluster types...")
     clusterTypesUri = f"{applianceUrl}/api/library/cluster-types"
     clusterTypesResponse = requests.get(clusterTypesUri, headers, verify=False)
     print(f"response code: {clusterTypesResponse.status_code}")
@@ -175,6 +176,7 @@ def getClusterLayoutId(headers, inputData):
     if groupTypeId is None:
         print("Could not determine hvm-cluster ID")
         sys.exit(1)
+    print("Getting cluster layouts...")
     clusterLayoutsUri = f"{applianceUrl}/api/library/cluster-layouts?zoneId={int(inputData['cloudId'])}&groupTypeId={int(groupTypeId)}"
     clusterLayoutsResponse = requests.get(clusterLayoutsUri, headers, verify=False)
     print(f"response code: {clusterLayoutsResponse.status_code}")
