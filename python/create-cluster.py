@@ -166,7 +166,7 @@ def ensureSshAvailable(instanceIp):
 def getClusterLayoutId(headers, inputData):
     applianceUrl = inputData['applianceUrl']
     print("Getting cluster types...")
-    clusterTypesUri = f"{applianceUrl}/api/library/cluster-types"
+    clusterTypesUri = f"{applianceUrl}/api/cluster-types"
     clusterTypesResponse = requests.get(clusterTypesUri, headers=headers)
     print(f"response code: {clusterTypesResponse.status_code}")
     clusterTypes = clusterTypesResponse.json()
