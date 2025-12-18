@@ -75,14 +75,15 @@ def getInstanceData(headers, inputData):
 	}
 
 def getUserSshKeyId(headers, inputData):
-	print("Getting user SSH key ID...")
-	applianceUrl = inputData['applianceUrl']
-	userUrl = f"{applianceUrl}/api/users/{inputData['sshUserId']}"
-	response = requests.get(userUrl, headers=headers)
-	print(f"response code: {response.status_code}")
-	responseData = response.json()
-	sshKeyId = responseData['user']['linuxKeyPairId'] # TODO this assumes the host VM is Linux.
-	return sshKeyId
+    print("Getting user SSH key ID...")
+    applianceUrl = inputData['applianceUrl']
+    userUrl = f"{applianceUrl}/api/users/{inputData['sshUserId']}" # TODO get this from cloud-init
+    #provisioningSettingsUrl = f"{applianceUrl}/api/provisioning-settings"
+    response = requests.get(userUrl, headers=headers)
+    print(f"response code: {response.status_code}")
+    responseData = response.json()
+    sshKeyId = responseData['user']['linuxKeyPairId'] # TODO this assumes the host VM is Linux.
+    return sshKeyId
 
 def postCluster(headers, inputData, instanceData, sshKeyId, clusterLayoutId):
     print("Creating HVM cluster...")
@@ -166,7 +167,7 @@ def getClusterLayoutId(headers, inputData):
     applianceUrl = inputData['applianceUrl']
     print("Getting cluster types...")
     clusterTypesUri = f"{applianceUrl}/api/library/cluster-types"
-    clusterTypesResponse = requests.get(clusterTypesUri, headers, verify=False)
+    clusterTypesResponse = requests.get(clusterTypesUri, headers=headers)
     print(f"response code: {clusterTypesResponse.status_code}")
     clusterTypes = clusterTypesResponse.json()
     for clusterType in clusterTypes['clusterTypes']:
@@ -178,7 +179,7 @@ def getClusterLayoutId(headers, inputData):
         sys.exit(1)
     print("Getting cluster layouts...")
     clusterLayoutsUri = f"{applianceUrl}/api/library/cluster-layouts?zoneId={int(inputData['cloudId'])}&groupTypeId={int(groupTypeId)}"
-    clusterLayoutsResponse = requests.get(clusterLayoutsUri, headers, verify=False)
+    clusterLayoutsResponse = requests.get(clusterLayoutsUri, headers=headers)
     print(f"response code: {clusterLayoutsResponse.status_code}")
     clusterLayouts = clusterLayoutsResponse.json()
     for layout in clusterLayouts['layouts']:
