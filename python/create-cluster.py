@@ -74,15 +74,14 @@ def getInstanceData(headers, inputData):
         'networkInterface': networkInterface
 	}
 
-def getUserSshKeyId(headers, inputData):
+def getSshKeyId(headers, inputData):
     print("Getting user SSH key ID...")
     applianceUrl = inputData['applianceUrl']
-    userUrl = f"{applianceUrl}/api/users/{inputData['sshUserId']}" # TODO get this from cloud-init
-    #provisioningSettingsUrl = f"{applianceUrl}/api/provisioning-settings"
-    response = requests.get(userUrl, headers=headers)
+    provisioningSettingsUrl = f"{applianceUrl}/api/provisioning-settings"
+    response = requests.get(provisioningSettingsUrl, headers=headers)
     print(f"response code: {response.status_code}")
     responseData = response.json()
-    sshKeyId = responseData['user']['linuxKeyPairId'] # TODO this assumes the host VM is Linux.
+    sshKeyId = responseData['provisioningSettings']['cloudInitKeyPair']['id']
     return sshKeyId
 
 def postCluster(headers, inputData, instanceData, sshKeyId, clusterLayoutId):
@@ -195,7 +194,7 @@ headers = {
     'Content-Type': 'application/json'
 }
 instanceData = getInstanceData(headers, inputData)
-sshKeyId = getUserSshKeyId(headers, inputData)
+sshKeyId = getSshKeyId(headers, inputData)
 if (inputData['clusterLayoutId'] is None):
     clusterLayoutId = getClusterLayoutId(headers, inputData)
 else:
